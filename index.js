@@ -37,6 +37,8 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 const run = async () => {
     const usersCollection = client.db('car-zone').collection("users");
+    const categoryCollection = client.db('car-zone').collection("car-category");
+    const carsCollection = client.db('car-zone').collection("all-cars");
 
     try {
 
@@ -44,12 +46,8 @@ const run = async () => {
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
-            const user = await usersCollection.findOne(query);
-            if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '20d' });
-                return res.send({ accessToken: token });
-            }
-            res.status(403).send({ accessToken: '' });
+            const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '20d' });
+            res.send({ accessToken: token });
         });
 
         //save users info in db
@@ -58,6 +56,23 @@ const run = async () => {
             const result = await usersCollection.insertOne(user);
             res.send(result);
         });
+
+        // get car category 
+        app.get("/category", async (req, res) => {
+            const query = {};
+            const result = await categoryCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        //get all cars by category
+        app.get("/all-cars/:category_name", async (req, res) => {
+            const category = req.params.category_name;
+            const query = {
+                category: category
+            }
+            const result = await carsCollection.find(query).toArray();
+            res.send(result);
+        })
 
     }
 
