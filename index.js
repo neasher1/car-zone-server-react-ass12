@@ -5,7 +5,7 @@ const port = process.env.PORT || 5000;
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { query } = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // middleware 
 app.use(cors());
@@ -131,6 +131,56 @@ const run = async () => {
             const car = req.body;
             const upload = await carsCollection.insertOne(car);
             res.send(upload);
+        });
+
+        // get my product
+        app.get('/my-products', verifyUser, async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
+            };
+            const result = await carsCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        // delete product
+        app.delete('/deleteproduct/:id', async (req, res) => {
+            const deleteId = req.params.id;
+            const query = {
+                _id: ObjectId(deleteId)
+            }
+            const result = await carsCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        // advertise 
+        app.post('/advertise', async (req, res) => {
+            const id = req.query.id;
+            console.log(id);
+            // find product
+            const query = {
+                _id: ObjectId(id)
+            };
+            const result = await carsCollection.findOne(query);
+
+            if (result) {
+                const upload = await advertisementCollection.insertOne(result);
+                res.send(upload);
+            };
+        })
+        app.put('/advertise', async (req, res) => {
+            const id = req.query.id;
+            const query = {
+                _id: ObjectId(id)
+            }
+            const options = { upsert: true }
+            const updatedDoc = {
+                $set: {
+                    advertise: true
+                }
+            }
+            const result = await carsCollection.updateOne(query, updatedDoc, options);
+            res.send(result);
         });
 
 
