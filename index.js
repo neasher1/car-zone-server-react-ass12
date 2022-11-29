@@ -78,14 +78,14 @@ const run = async () => {
         //get booking cars
         app.get('/booking', verifyUser, async (req, res) => {
             const email = req.query.email;
-            console.log(email);
+            // console.log(email);
             const decodedEmail = req.decoded.email;
             if (decodedEmail !== email) {
                 return res.status(401).send({ message: 'unauthorized access' })
             };
             const query = {
                 email: email
-            }
+            };
             const result = await bookingCollection.find(query).toArray();
             res.send(result);
         });
@@ -95,6 +95,36 @@ const run = async () => {
             const booking = req.body;
             const result = await bookingCollection.insertOne(booking);
             res.send(result);
+        });
+
+        //check buyer role
+        app.get('/buyer', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
+            };
+            const user = await usersCollection.findOne(query);
+            res.send({ isBuyer: user?.role === 'buyer' });
+        });
+
+        //check seller role
+        app.get('/seller', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
+            };
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.role === 'seller' });
+        });
+
+        //check seller role
+        app.get('/admin', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
+            };
+            const user = await usersCollection.findOne(query);
+            res.send({ isAdmin: user?.role === 'admin' });
         });
 
 
