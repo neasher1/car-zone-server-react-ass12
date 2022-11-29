@@ -11,25 +11,25 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 app.use(cors());
 app.use(express.json());
 
-// const verifyUser = (req, res, next) => {
-//     const authHeader = req.headers.authorization;
-//     if (!authHeader) {
-//         return res.status(401).send({ message: 'unauthorized access' });
-//     }
-//     const token = authHeader.split(' ')[1];
-//     if (!token) {
-//         return res.status(401).send({ message: 'unauthorized access' })
-//     };
-//     jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
-//         if (err) {
-//             res.status(403).send({ message: '403 Forbidden' })
-//         }
-//         req.decoded = decoded;
-//     });
-//     next();
+//JWT verify
+const verifyUser = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'unauthorized access' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).send({ message: 'unauthorized access' })
+    };
+    jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            res.status(403).send({ message: '403 Forbidden' })
+        }
+        req.decoded = decoded;
+    });
+    next();
 
-// }
-
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.hlzaati.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -39,6 +39,7 @@ const run = async () => {
     const usersCollection = client.db('car-zone').collection("users");
     const categoryCollection = client.db('car-zone').collection("car-category");
     const carsCollection = client.db('car-zone').collection("all-cars");
+    const bookingCollection = client.db('car-zone').collection("booking");
 
     try {
 
@@ -64,14 +65,38 @@ const run = async () => {
         });
 
         //get all cars by category
-        app.get("/all-cars/:category_name", async (req, res) => {
-            const category = req.params.category_name;
+        app.get("/all-cars/:category", async (req, res) => {
+            const category = req.params.category;
             const query = {
                 category: category
             }
             const result = await carsCollection.find(query).toArray();
             res.send(result);
-        })
+        });
+
+
+        //get booking cars
+        app.get('/booking', verifyUser, async (req, res) => {
+            const email = req.query.email;
+            console.log(email);
+            const decodedEmail = req.decoded.email;
+            if (decodedEmail !== email) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            };
+            const query = {
+                email: email
+            }
+            const result = await bookingCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        //post booking cars in db
+        app.post('/booking', async (req, res) => {
+            const booking = req.body;
+            const result = await bookingCollection.insertOne(booking);
+            res.send(result);
+        });
+
 
     }
 
