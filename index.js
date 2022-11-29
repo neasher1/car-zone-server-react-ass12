@@ -21,7 +21,7 @@ const verifyUser = (req, res, next) => {
     if (!token) {
         return res.status(401).send({ message: 'unauthorized access' })
     };
-    jwt.verify(token, process.env.TOKEN_SECRET, (err, decoded) => {
+    jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
         if (err) {
             res.status(403).send({ message: '403 Forbidden' })
         }
@@ -78,7 +78,6 @@ const run = async () => {
         //get booking cars
         app.get('/booking', verifyUser, async (req, res) => {
             const email = req.query.email;
-            // console.log(email);
             const decodedEmail = req.decoded.email;
             if (decodedEmail !== email) {
                 return res.status(401).send({ message: 'unauthorized access' })
@@ -98,7 +97,7 @@ const run = async () => {
         });
 
         //check buyer role
-        app.get('/buyer', async (req, res) => {
+        app.get('/buyer', verifyUser, async (req, res) => {
             const email = req.query.email;
             const query = {
                 email: email
@@ -108,7 +107,7 @@ const run = async () => {
         });
 
         //check seller role
-        app.get('/seller', async (req, res) => {
+        app.get('/seller', verifyUser, async (req, res) => {
             const email = req.query.email;
             const query = {
                 email: email
@@ -118,13 +117,20 @@ const run = async () => {
         });
 
         //check seller role
-        app.get('/admin', async (req, res) => {
+        app.get('/admin', verifyUser, async (req, res) => {
             const email = req.query.email;
             const query = {
                 email: email
             };
             const user = await usersCollection.findOne(query);
             res.send({ isAdmin: user?.role === 'admin' });
+        });
+
+        //Upload a product (car)
+        app.post('/uploadCar', async (req, res) => {
+            const car = req.body;
+            const upload = await carsCollection.insertOne(car);
+            res.send(upload);
         });
 
 
