@@ -187,8 +187,64 @@ const run = async () => {
         // get all advertisment product
         app.get('/advertise', async (req, res) => {
             const query = {};
-            const result = await advertisementCollection.find(query).toArray();
+            const result = await carsCollection.find(query).toArray();
             res.send(result);
+        });
+
+        // get all seller 
+        app.get('/allseller', verifyUser, async (req, res) => {
+            const query = {
+                role: 'seller'
+            };
+            const result = await usersCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        // delete seller & buyer 
+        app.delete('/allseller/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: ObjectId(id)
+            }
+            const result = await usersCollection.deleteOne(query);
+            res.send(result)
+        });
+
+        // get all buyer 
+        app.get('/allbuyer', verifyUser, async (req, res) => {
+            const query = {
+                role: 'buyer'
+            };
+            const result = await usersCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        // verify seller 
+        app.put('/verifyseller/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: ObjectId(id)
+            };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    verified: true
+                }
+            };
+            const result = usersCollection.updateOne(query, updatedDoc, options);
+            res.send(result);
+        });
+
+        app.get('/verifiedseller', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
+            };
+            const matchedItem = await usersCollection.findOne(query);
+
+            if (matchedItem) {
+                res.send({ verified: matchedItem.verified === true })
+            }
         });
 
 
