@@ -40,6 +40,7 @@ const run = async () => {
     const categoryCollection = client.db('car-zone').collection("car-category");
     const carsCollection = client.db('car-zone').collection("all-cars");
     const bookingCollection = client.db('car-zone').collection("booking");
+    const advertisementCollection = client.db('car-zone').collection("advertisement");
 
     try {
 
@@ -156,7 +157,6 @@ const run = async () => {
         // advertise 
         app.post('/advertise', async (req, res) => {
             const id = req.query.id;
-            console.log(id);
             // find product
             const query = {
                 _id: ObjectId(id)
@@ -167,7 +167,8 @@ const run = async () => {
                 const upload = await advertisementCollection.insertOne(result);
                 res.send(upload);
             };
-        })
+        });
+
         app.put('/advertise', async (req, res) => {
             const id = req.query.id;
             const query = {
@@ -180,6 +181,13 @@ const run = async () => {
                 }
             }
             const result = await carsCollection.updateOne(query, updatedDoc, options);
+            res.send(result);
+        });
+
+        // get all advertisment product
+        app.get('/advertise', async (req, res) => {
+            const query = {};
+            const result = await advertisementCollection.find(query).toArray();
             res.send(result);
         });
 
